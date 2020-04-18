@@ -1,18 +1,43 @@
 use sdl2::pixels::Color;
 use sdl2::event::Event;
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 use std::time::Duration;
 
-const CUBE: [[f64; 3]; 8] = [
-    [-1.0,  1.0,  1.0],
-    [ 1.0,  1.0,  1.0],
-    [ 1.0,  1.0, -1.0],
-    [-1.0,  1.0, -1.0],
-    [-1.0, -1.0,  1.0],
-    [ 1.0, -1.0,  1.0],
-    [ 1.0, -1.0, -1.0],
-    [-1.0, -1.0, -1.0],
+const VS: [[f64; 3]; 8] = [
+    [-1.0,  1.0,  1.0],  // 0
+    [ 1.0,  1.0,  1.0],  // 1
+    [ 1.0,  1.0, -1.0],  // 2
+    [-1.0,  1.0, -1.0],  // 3
+
+    [-1.0, -1.0,  1.0],  // 4
+    [ 1.0, -1.0,  1.0],  // 5
+    [ 1.0, -1.0, -1.0],  // 6
+    [-1.0, -1.0, -1.0],  // 7
 ];
+
+const LS: [[usize; 2]; 12] = [
+    // Top Side
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 0],
+
+    // Bottom side
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 4],
+
+    // Vertical
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7]
+];
+
+fn project([x, y, z]: [f64; 3]) -> [f64; 2] {
+    return [x / z, y / z];
+}
 
 fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
     let half_w = w * 0.5;
@@ -22,10 +47,19 @@ fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
     return [x, y];
 }
 
+fn rotate_y([x0, y0, z0]: [f64; 3], theta: f64) -> [f64; 3] {
+    let x1 = x0 * f64::cos(theta) + z0 * f64::sin(theta);
+    let z1 = x0 * f64::sin(theta) - z0 * f64::cos(theta);
+    return [x1, y0, z1];
+}
+
+fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
+    return [x0 + x1, y0 + y1, z0 + z1];
+}
+
 const DISTANCE: f64 = 4.0;
 const BACKGROUND: Color = Color::RGB(18, 18, 18);
 const FOREGROUND: Color = Color::RGB(255, 150, 150);
-const SQUARE_SIZE: f64 = 10.0;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -56,20 +90,14 @@ fn main() -> Result<(), String> {
         canvas.clear();
 
         canvas.set_draw_color(FOREGROUND);
-        for [x0, y0, z0] in &CUBE {
-            let x1 = x0 * f64::cos(rotation) + z0 * f64::sin(rotation);
-            let z1 = x0 * f64::sin(rotation) - z0 * f64::cos(rotation);
-
-            let x = x1 / (z1 + DISTANCE);
-            let y = y0 / (z1 + DISTANCE);
-            let (w, h) = canvas.window().size();
-            let [sx, sy] = to_screen([x, y], w as f64, h as f64);
-
-            canvas.fill_rect(Rect::new(
-                (sx - SQUARE_SIZE * 0.5) as i32,
-                (sy - SQUARE_SIZE * 0.5) as i32,
-                SQUARE_SIZE as u32,
-                SQUARE_SIZE as u32))?;
+        let (w, h) = canvas.window().size();
+        for [l1, l2] in &LS {
+            let [sx0, sy0] = to_screen(project(translate(rotate_y(VS[*l1], rotation), [0.0, 0.0, DISTANCE])),
+                                       w as f64, h as f64);
+            let [sx1, sy1] = to_screen(project(translate(rotate_y(VS[*l2], rotation), [0.0, 0.0, DISTANCE])),
+                                       w as f64, h as f64);
+            canvas.draw_line(Point::new(sx0 as i32, sy0 as i32),
+                             Point::new(sx1 as i32, sy1 as i32))?;
         }
 
         canvas.present();
