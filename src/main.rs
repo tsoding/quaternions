@@ -3,6 +3,65 @@ use sdl2::event::Event;
 use sdl2::rect::Point;
 use std::time::Duration;
 
+#[derive(Clone, Copy)]
+struct Quaternion {
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+}
+
+impl Quaternion {
+    fn from_v3([x, y, z]: [f64; 3]) -> Quaternion {
+        Self {
+            a: 0.0,
+            b: x,
+            c: y,
+            d: z,
+        }
+    }
+
+    fn to_v3(self) -> [f64; 3] {
+        let Quaternion { a, b, c, d } = self;
+        assert!(f64::abs(a) < 1e-6);
+        [b, c, d]
+    }
+
+    fn rot([x, y, z]: [f64; 3], theta: f64) -> Quaternion {
+        let l = f64::sqrt(x * x + y * y + z * z);
+        let c = f64::cos(theta * 0.5);
+        let s = f64::sin(theta * 0.5);
+        Self {
+            a: c,
+            b: x / l * s,
+            c: y / l * s,
+            d: z / l * s
+        }
+    }
+
+    fn product(self,
+               Quaternion { a:a2, b: b2, c: c2, d: d2 }: Quaternion) -> Quaternion {
+        let Quaternion { a:a1, b: b1, c: c1, d: d1 } = self;
+        Self {
+            a: a1 * a2 - b1 * b2 - c1 * c2 - d1 * d2,
+            b: a1 * b2 + b1 * a2 + c1 * d2 - d1 * c2,
+            c: a1 * c2 - b1 * d2 + c1 * a2 + d1 * b2,
+            d: a1 * d2 + b1 * c2 - c1 * b2 + d1 * a2,
+        }
+    }
+
+    fn recip(self) -> Quaternion {
+        let Quaternion { a, b, c, d } = self;
+        let q = a * a + b * b + c * c + d * d;
+        Self {
+            a:  a / q,
+            b: -b / q,
+            c: -c / q,
+            d: -d / q,
+        }
+    }
+}
+
 const VS: [[f64; 3]; 8] = [
     [-1.0,  1.0,  1.0],  // 0
     [ 1.0,  1.0,  1.0],  // 1
@@ -44,9 +103,16 @@ fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
     let half_h = h * 0.5;
     let x = x0 * half_w + half_w;
     let y = y0 * half_h + half_h;
-    return [x, y];
+    [x, y]
 }
 
+fn epic_rotate(p: [f64; 3], theta: f64) -> [f64; 3] {
+    let pq = Quaternion::from_v3(p);
+    let rotq = Quaternion::rot([1.0, 1.0, 1.0], theta);
+    rotq.product(pq).product(rotq.recip()).to_v3()
+}
+
+#[allow(dead_code)]
 fn rotate_y([x0, y0, z0]: [f64; 3], theta: f64) -> [f64; 3] {
     let x1 = x0 * f64::cos(theta) + z0 * f64::sin(theta);
     let z1 = x0 * f64::sin(theta) - z0 * f64::cos(theta);
@@ -92,9 +158,9 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(FOREGROUND);
         let (w, h) = canvas.window().size();
         for [l1, l2] in &LS {
-            let [sx0, sy0] = to_screen(project(translate(rotate_y(VS[*l1], rotation), [0.0, 0.0, DISTANCE])),
+            let [sx0, sy0] = to_screen(project(translate(epic_rotate(VS[*l1], rotation), [0.0, 0.0, DISTANCE])),
                                        w as f64, h as f64);
-            let [sx1, sy1] = to_screen(project(translate(rotate_y(VS[*l2], rotation), [0.0, 0.0, DISTANCE])),
+            let [sx1, sy1] = to_screen(project(translate(epic_rotate(VS[*l2], rotation), [0.0, 0.0, DISTANCE])),
                                        w as f64, h as f64);
             canvas.draw_line(Point::new(sx0 as i32, sy0 as i32),
                              Point::new(sx1 as i32, sy1 as i32))?;
