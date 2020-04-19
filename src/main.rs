@@ -108,7 +108,8 @@ fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
 
 fn epic_rotate(p: [f64; 3], theta: f64) -> [f64; 3] {
     let pq = Quaternion::from_v3(p);
-    let rotq = Quaternion::rot([1.0, 1.0, 1.0], theta);
+    let rotq = Quaternion::rot([0.0, 1.0, 0.0], theta)
+        .product(Quaternion::rot([1.0, 0.0, 0.0], theta));
     rotq.product(pq).product(rotq.recip()).to_v3()
 }
 
