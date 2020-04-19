@@ -1,7 +1,10 @@
+extern crate rand;
+
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::rect::Point;
 use std::time::Duration;
+use rand::Rng;
 
 #[derive(Clone, Copy)]
 struct Quaternion {
@@ -124,8 +127,8 @@ fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
 }
 
 const DISTANCE: f64 = 4.0;
-const BACKGROUND: Color = Color::RGB(18, 18, 18);
-const FOREGROUND: Color = Color::RGB(255, 150, 150);
+//const BACKGROUND: Color = Color::RGB(18, 18, 18);
+//const FOREGROUND: Color = Color::RGB(150, 255, 255);
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -152,10 +155,14 @@ fn main() -> Result<(), String> {
 
         }
 
-        canvas.set_draw_color(BACKGROUND);
+        let mut rng = rand::thread_rng();
+        let (r, g, b): (u8, u8, u8) = rng.gen();
+        let (x, y, z): (u8, u8, u8) = rng.gen();
+
+        canvas.set_draw_color(Color::RGB(r, g, b));
         canvas.clear();
 
-        canvas.set_draw_color(FOREGROUND);
+        canvas.set_draw_color(Color::RGB(x, y, z));
         let (w, h) = canvas.window().size();
         for [l1, l2] in &LS {
             let [sx0, sy0] = to_screen(project(translate(epic_rotate(VS[*l1], rotation), [0.0, 0.0, DISTANCE])),
