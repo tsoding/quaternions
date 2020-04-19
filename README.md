@@ -1,6 +1,6 @@
 # Simple exercise to learn about Quaternions
 
-![](https://i.imgur.com/ujP4o4r.png)
+![](./demo.gif)
 
 ## Quick Start
 
