@@ -127,8 +127,6 @@ fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
 }
 
 const DISTANCE: f64 = 4.0;
-//const BACKGROUND: Color = Color::RGB(18, 18, 18);
-//const FOREGROUND: Color = Color::RGB(150, 255, 255);
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
