@@ -1,6 +1,8 @@
 # Simple exercise to learn about Quaternions
 
-![](https://i.imgur.com/ujP4o4r.png)
+![](./demo.gif)
+
+This code is the result of a Random One-off stream: https://www.twitch.tv/videos/597042442
 
 ## Quick Start
 

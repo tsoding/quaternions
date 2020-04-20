@@ -97,8 +97,8 @@ const LS: [[usize; 2]; 12] = [
     [3, 7]
 ];
 
-fn project([x, y, z]: [f64; 3]) -> [f64; 2] {
-    return [x / z, y / z];
+fn project([x, y, z]: [f64; 3], r: f64) -> [f64; 2] {
+    return [x * r / z, y / z];
 }
 
 fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
@@ -111,7 +111,8 @@ fn to_screen([x0, y0]: [f64; 2], w: f64, h: f64) -> [f64; 2] {
 
 fn epic_rotate(p: [f64; 3], theta: f64) -> [f64; 3] {
     let pq = Quaternion::from_v3(p);
-    let rotq = Quaternion::rot([1.0, 1.0, 1.0], theta);
+    let rotq = Quaternion::rot([0.0, 1.0, 0.0], theta)
+        .product(Quaternion::rot([1.0, 0.0, 0.0], theta));
     rotq.product(pq).product(rotq.recip()).to_v3()
 }
 
@@ -126,14 +127,14 @@ fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
     return [x0 + x1, y0 + y1, z0 + z1];
 }
 
-const DISTANCE: f64 = 4.0;
+const DISTANCE: f64 = 3.0;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let window = video_subsystem.window("Quaternions", 800, 600)
         .position_centered()
-        .opengl()
+        .resizable()
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -163,9 +164,10 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(Color::RGB(x, y, z));
         let (w, h) = canvas.window().size();
         for [l1, l2] in &LS {
-            let [sx0, sy0] = to_screen(project(translate(epic_rotate(VS[*l1], rotation), [0.0, 0.0, DISTANCE])),
+            let r = h as f64 / w as f64;
+            let [sx0, sy0] = to_screen(project(translate(epic_rotate(VS[*l1], rotation), [0.0, 0.0, DISTANCE]), r),
                                        w as f64, h as f64);
-            let [sx1, sy1] = to_screen(project(translate(epic_rotate(VS[*l2], rotation), [0.0, 0.0, DISTANCE])),
+            let [sx1, sy1] = to_screen(project(translate(epic_rotate(VS[*l2], rotation), [0.0, 0.0, DISTANCE]), r),
                                        w as f64, h as f64);
             canvas.draw_line(Point::new(sx0 as i32, sy0 as i32),
                              Point::new(sx1 as i32, sy1 as i32))?;
