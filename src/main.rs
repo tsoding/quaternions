@@ -116,12 +116,14 @@ fn epic_rotate(p: [f64; 3], theta: f64) -> [f64; 3] {
     rotq.product(pq).product(rotq.recip()).to_v3()
 }
 
+/*
 #[allow(dead_code)]
 fn rotate_y([x0, y0, z0]: [f64; 3], theta: f64) -> [f64; 3] {
     let x1 = x0 * f64::cos(theta) + z0 * f64::sin(theta);
     let z1 = x0 * f64::sin(theta) - z0 * f64::cos(theta);
     return [x1, y0, z1];
 }
+*/
 
 fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
     return [x0 + x1, y0 + y1, z0 + z1];
