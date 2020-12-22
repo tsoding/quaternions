@@ -1,7 +1,10 @@
+extern crate rand;
+
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::rect::Point;
 use std::time::Duration;
+use rand::Rng;
 
 #[derive(Clone, Copy)]
 struct Quaternion {
@@ -113,20 +116,20 @@ fn epic_rotate(p: [f64; 3], theta: f64) -> [f64; 3] {
     rotq.product(pq).product(rotq.recip()).to_v3()
 }
 
+/*
 #[allow(dead_code)]
 fn rotate_y([x0, y0, z0]: [f64; 3], theta: f64) -> [f64; 3] {
     let x1 = x0 * f64::cos(theta) + z0 * f64::sin(theta);
     let z1 = x0 * f64::sin(theta) - z0 * f64::cos(theta);
     return [x1, y0, z1];
 }
+*/
 
 fn translate([x0, y0, z0]: [f64; 3], [x1, y1, z1]: [f64; 3]) -> [f64; 3] {
     return [x0 + x1, y0 + y1, z0 + z1];
 }
 
 const DISTANCE: f64 = 3.0;
-const BACKGROUND: Color = Color::RGB(18, 18, 18);
-const FOREGROUND: Color = Color::RGB(255, 150, 150);
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -153,10 +156,14 @@ fn main() -> Result<(), String> {
 
         }
 
-        canvas.set_draw_color(BACKGROUND);
+        let mut rng = rand::thread_rng();
+        let (r, g, b): (u8, u8, u8) = rng.gen();
+        let (x, y, z): (u8, u8, u8) = rng.gen();
+
+        canvas.set_draw_color(Color::RGB(r, g, b));
         canvas.clear();
 
-        canvas.set_draw_color(FOREGROUND);
+        canvas.set_draw_color(Color::RGB(x, y, z));
         let (w, h) = canvas.window().size();
         for [l1, l2] in &LS {
             let r = h as f64 / w as f64;
